@@ -10,6 +10,7 @@ const UNAPPROVAL_CNT = '未承認のページ数';
 
 const LOG_FILE_NAME = 'log.json';
 const i = (n) => ' '.repeat(n) ; // 任意の深さのインデント文字を返す
+const formatDate = (n) => n.toString().padStart(2, '0');
 
 // 前回のログ
 const prevLogPages = await fetch(`${API_ROOT}/pages/${LOGS_PROJ_NAME}/?limit=1`)
@@ -48,14 +49,16 @@ if (prevLogPages.length > 0) {
 
 body.push(`${i(1)}{`, log.join(',\n'), `${i(1)}}`);
 
-const now = new Date()
+const now = new Date();
 const [year, month, date, hour, min, sec] = [
   now.getFullYear(),
-  now.getMonth(),
-  now.getDate(),
-  now.getHours(),
-  now.getMinutes(),
-  now.getSeconds()
+  ...[
+    now.getMonth() + 1,
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds()
+  ].map(date => formatDate(date))
 ];
 
 const ymd = `${year}/${month}/${date}`;
