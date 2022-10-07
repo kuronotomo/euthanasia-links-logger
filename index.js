@@ -20,7 +20,7 @@ class App {
   static handleError = (res) => {
     const status = parseInt(res.status);
     if (200 <= status && status < 400) return res;
-    else throw new Error(res.status);
+    else throw new Error(`HTTPステータスコード ${res.status}`);
   };
 
   constructor() {
