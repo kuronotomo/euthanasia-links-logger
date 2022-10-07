@@ -6,9 +6,11 @@ class App {
   static LOG_FILE_NAME = "log.json";
 
   static TOTAL_CNT = "ページ総数";
+  static UNAPPROVAL_CNT = "未承認のページ数";
   static ADDITION_CNT = "前回以降に追加されたページ数";
   static APPROVAL_CNT = "前回以降に承認されたページ数";
-  static UNAPPROVAL_CNT = "未承認のページ数";
+  static CNT_VALUE = "値";
+  static CNT_DIFF = "前回比";
 
   static i = (n) => " ".repeat(n); // 任意の深さのインデント文字を返す
 
@@ -20,12 +22,21 @@ class App {
     else throw new Error(`HTTPステータスコード ${res.status}`);
   };
 
+  // deno-fmt-ignore
+  static addSign(n) {
+    return n > 0 
+      ? `+${n}`
+      : n === 0
+      ? `±${0}`
+      : `${n}`;
+  }
+
   constructor() {
     this.body = [`code: ${App.LOG_FILE_NAME}`];
-    this.log = [];
+    this.log = {};
     this.errors = [];
     this.approvalCnt = 0;
-    this.unApprovalCnt = 0;
+    this.unapprovalCnt = 0;
   }
 
   async getAllPagesAndCount() {
@@ -49,7 +60,7 @@ class App {
 
     for (const page of pages) {
       if (page.title.includes("🚧")) { // 未承認
-        this.unApprovalCnt++;
+        this.unapprovalCnt++;
       } else if (!page.title.includes("🙈") && !page.pin) { // 承認済み
         this.approvalCnt++;
       }
@@ -96,26 +107,46 @@ class App {
   createLog() {
     if (this.errors.length > 0) return;
 
-    this.log.push(
-      `${App.i(3)}"${App.TOTAL_CNT}": ${this.linksProjectData.count}`,
-      `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
-    );
+    this.log[App.TOTAL_CNT] = this.linksProjectData.count;
+    this.log[App.UNAPPROVAL_CNT] = this.unapprovalCnt;
 
     if (this.prevLog) {
       const additionCnt = this.linksProjectData.count -
         this.prevLog[App.TOTAL_CNT];
-      this.log.push(`${App.i(3)}"${App.ADDITION_CNT}": ${additionCnt}`);
+      const addtionCntDiff = additionCnt -
+        this.prevLog[App.ADDITION_CNT][App.CNT_VALUE];
+
+      this.log[App.ADDITION_CNT] = {
+        [App.CNT_VALUE]: additionCnt,
+        [App.CNT_DIFF]: App.addSign(addtionCntDiff),
+      };
+
+      const approvalCntDiff = this.approvalCnt -
+        this.prevLog[App.APPROVAL_CNT][App.CNT_VALUE];
+
+      this.log[App.APPROVAL_CNT] = {
+        [App.CNT_VALUE]: this.approvalCnt,
+        [App.CNT_DIFF]: App.addSign(approvalCntDiff),
+      };
     } else {
-      this.log.push(
-        `${App.i(3)}"${App.ADDITION_CNT}": ${this.linksProjectData.count}`,
-      );
+      this.log[App.ADDITION_CNT] = {
+        [App.CNT_VALUE]: this.linksProjectData.count,
+        [App.CNT_DIFF]: App.addSign(0),
+      };
+
+      this.log[App.APPROVAL_CNT] = {
+        [App.CNT_VALUE]: this.approvalCnt,
+        [App.CNT_DIFF]: App.addSign(0),
+      };
     }
 
-    this.log.push(`${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`);
+    // Scrapboxのコードブロック内に収まるように整形する
     this.body.push(
-      `${App.i(1)}{`,
-      this.log.join(",\n"),
-      `${App.i(1)}}`,
+      JSON
+        .stringify(this.log, null, "\t")
+        .split("\n")
+        .map((line) => App.i(1) + line)
+        .join("\n"),
     );
   }
 
@@ -137,7 +168,7 @@ class App {
 
     this.body.push(
       "",
-      `#${year}年 #${month}月`
+      `#${year}年 #${month}月`,
     );
 
     // if (this.prevLogs[0]?.title.includes(ymd)) {
