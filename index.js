@@ -100,17 +100,17 @@ class App {
       const additionCnt = this.pageList.count - prevLog[App.TOTAL_CNT];
 
       this.log.push(
-        `${App.i(3)}${`"${App.TOTAL_CNT}": ${this.pageList.count}`}`,
-        `${App.i(3)}${`"${App.ADDITION_CNT}": ${additionCnt}`}`,
-        `${App.i(3)}${`"${App.APPROVAL_CNT}": ${this.approvalCnt}`}`,
-        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`}`,
+        `${App.i(3)}"${App.TOTAL_CNT}": ${this.pageList.count}`,
+        `${App.i(3)}"${App.ADDITION_CNT}": ${additionCnt}`,
+        `${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`,
+        `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
       );
     } else {
       this.log.push(
-        `${App.i(3)}${`"${App.TOTAL_CNT}": ${this.pageList.count}`}`,
-        `${App.i(3)}${`"${App.ADDITION_CNT}": ${this.pageList.count}`}`,
-        `${App.i(3)}${`"${App.APPROVAL_CNT}": ${this.approvalCnt}`}`,
-        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`}`,
+        `${App.i(3)}"${App.TOTAL_CNT}": ${this.pageList.count}`,
+        `${App.i(3)}"${App.ADDITION_CNT}": ${this.pageList.count}`,
+        `${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`,
+        `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
       );
     }
 
