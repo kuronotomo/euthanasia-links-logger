@@ -12,6 +12,10 @@ class App {
   static LOG_FILE_NAME = "log.json";
   static i = (n) => " ".repeat(n); // 任意の深さのインデント文字を返す
   static formatDate = (n) => n.toString().padStart(2, "0");
+  static handleError = (res) => {
+    if (res.ok) return res;
+    else throw new Error(res.status);
+  };
 
   constructor() {
     this.body = [`code: ${App.LOG_FILE_NAME}`];
@@ -20,22 +24,35 @@ class App {
   }
 
   async fetchData() {
-    // 前回のログ
-    this.prevLogPages = await fetch(
-      `${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}/?limit=1`,
-    )
-      .then((res) => res.json())
-      .then((data) => data.pages);
+    try {
+      const responses = [];
 
-    // リンク集のページ情報
-    this.pageList = await fetch(
-      `${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}/?limit=1`,
-    )
-      .then((res) => res.json());
+      // 前回のログ
+      responses.push(
+        await fetch(
+          `${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}/?limit=1`,
+        ),
+      );
+      this.prevLogPages = await App.handleError(responses[0]).json().then((data) =>
+        data.pages
+      );
+
+      // リンク集のページ情報
+      responses.push(
+        await fetch(
+          `${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}/?limit=1`,
+        ),
+      );
+      this.pageList = await App.handleError(responses[1]).json();
+    } catch (error) {
+      this.errors.push(`通信エラーが発生しました。ステータス: ${error.message}`);
+    }
   }
 
   // ログ用のjsonファイルを作成する
   async createLog() {
+    if (this.errors.length > 0) return;
+
     if (this.prevLogPages.length > 0) {
       const prevLog = await fetch(
         `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
