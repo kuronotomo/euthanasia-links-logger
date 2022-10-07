@@ -150,7 +150,7 @@ class App {
     );
   }
 
-  createScrapboxPage() {
+  async createScrapboxPage() {
     const now = new Date();
     const [year, month, date, hour, min, sec] = [
       now.getFullYear(),
@@ -178,18 +178,27 @@ class App {
     if (this.errors.length > 0) {
       alert(this.errors.map((e) => `・${e}`).join("\n"));
     } else {
-      console.log(
-        `https://scrapbox.io/${App.LOGS_PROJ_NAME}/${title}?body=${
-          encodeURIComponent(this.body.join("\n"))
-        }`,
-      );
+      const url = `https://scrapbox.io/${App.LOGS_PROJ_NAME}/${title}?body=${
+        encodeURIComponent(this.body.join("\n"))
+      }`;
+
+      if (window.open) {
+        window.open(url);
+      } else {
+        const p = Deno.run({
+          cmd: ["open", url],
+          stderr: "piped",
+          stdout: "piped",
+        });
+        await p.status();
+      }
     }
   }
 
   async run() {
     await this.fetchData();
     this.createLog();
-    this.createScrapboxPage();
+    await this.createScrapboxPage();
   }
 }
 
