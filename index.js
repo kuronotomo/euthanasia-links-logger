@@ -62,10 +62,12 @@ class App {
   async fetchData() {
     try {
       const responses = [];
+      const params = new URLSearchParams([["limit", "1"], ["sort", "created"]])
+        .toString();
 
       // 前回のログ
       responses.push(
-        await fetch(`${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}/?limit=1`),
+        await fetch(`${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}?${params}`),
       );
       this.prevLogPages = await App.handleError(responses[0]).json().then((
         data,
@@ -73,7 +75,7 @@ class App {
 
       // リンク集のページ情報
       responses.push(
-        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}/?limit=1`),
+        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}?${params}`),
       );
       this.pageList = await App.handleError(responses[1]).json();
 
