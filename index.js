@@ -3,15 +3,12 @@ class App {
   static API_ROOT = `${App.ROOT}/api`;
   static LINKS_PROJ_NAME = "euthanasia-links";
   static LOGS_PROJ_NAME = "euthanasia-links-logs";
+  static LOG_FILE_NAME = "log.json";
 
   static TOTAL_CNT = "ページ総数";
   static ADDITION_CNT = "前回以降に追加されたページ数";
   static APPROVAL_CNT = "前回以降に承認されたページ数";
   static UNAPPROVAL_CNT = "未承認のページ数";
-
-  // static APPROVAL_CNT_SEARCH_QUERY = "#承認";
-  // static UNAPPROVAL_CNT_SEARCH_QUERY = "#未承認";
-  static LOG_FILE_NAME = "log.json";
 
   static i = (n) => " ".repeat(n); // 任意の深さのインデント文字を返す
 
@@ -61,25 +58,34 @@ class App {
 
   async fetchData() {
     try {
-      const responses = [];
+      const q = [];
       const params = new URLSearchParams([["limit", "1"], ["sort", "created"]])
         .toString();
 
-      // 前回のログ
-      responses.push(
+      // ログファイル群のプロジェクトデータと前回のログファイルを取得する
+      q.push(
         await fetch(`${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}?${params}`),
       );
-      this.prevLogPages = await App.handleError(responses[0]).json().then((
-        data,
-      ) => data.pages);
+      this.logProjectData = await App.handleError(q.pop()).json();
 
-      // リンク集のページ情報
-      responses.push(
+      if (this.logProjectData.pages.length > 0) {
+        q.push(
+          await fetch(
+            `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
+              encodeURIComponent(this.logProjectData.pages[0].title)
+            }/${App.LOG_FILE_NAME}`,
+          ),
+        );
+        this.prevLog = await App.handleError(q.pop()).json();
+      }
+
+      // リンク集のプロジェクトデータを取得する
+      q.push(
         await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}?${params}`),
       );
-      this.pageList = await App.handleError(responses[1]).json();
+      this.linksProjectData = await App.handleError(q.pop()).json();
 
-      // 承認済み・未承認ページの検索結果
+      // 承認済み・未承認ページ数を数える
       await this.getAllPagesAndCount();
     } catch (error) {
       this.errors.push(`実行時エラーが発生しました。詳細: ${error.message}`);
@@ -87,33 +93,25 @@ class App {
   }
 
   // ログ用のjsonファイルを作成する
-  async createLog() {
+  createLog() {
     if (this.errors.length > 0) return;
 
-    if (this.prevLogPages.length > 0) {
-      const prevLog = await fetch(
-        `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
-          encodeURIComponent(this.prevLogPages[0].title)
-        }/${App.LOG_FILE_NAME}`,
-      )
-        .then((res) => res.json());
-      const additionCnt = this.pageList.count - prevLog[App.TOTAL_CNT];
+    this.log.push(
+      `${App.i(3)}"${App.TOTAL_CNT}": ${this.linksProjectData.count}`,
+      `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
+    );
 
-      this.log.push(
-        `${App.i(3)}"${App.TOTAL_CNT}": ${this.pageList.count}`,
-        `${App.i(3)}"${App.ADDITION_CNT}": ${additionCnt}`,
-        `${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`,
-        `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
-      );
+    if (this.prevLog) {
+      const additionCnt = this.linksProjectData.count -
+        this.prevLog[App.TOTAL_CNT];
+      this.log.push(`${App.i(3)}"${App.ADDITION_CNT}": ${additionCnt}`);
     } else {
       this.log.push(
-        `${App.i(3)}"${App.TOTAL_CNT}": ${this.pageList.count}`,
-        `${App.i(3)}"${App.ADDITION_CNT}": ${this.pageList.count}`,
-        `${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`,
-        `${App.i(3)}"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`,
+        `${App.i(3)}"${App.ADDITION_CNT}": ${this.linksProjectData.count}`,
       );
     }
 
+    this.log.push(`${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`);
     this.body.push(`${App.i(1)}{`, this.log.join(",\n"), `${App.i(1)}}`);
   }
 
@@ -150,7 +148,7 @@ class App {
 
   async run() {
     await this.fetchData();
-    await this.createLog();
+    this.createLog();
     this.createScrapboxPage();
   }
 }
