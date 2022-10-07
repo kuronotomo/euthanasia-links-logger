@@ -7,10 +7,11 @@ const ADDITION_CNT = '前回以降に追加されたページ数';
 const APPROVAL_CNT = '前回以降に承認されたページ数';
 const UNAPPROVAL_CNT = '未承認のページ数';
 
-const i = ' '; // Scrapboxでインデントを示す文字
+const LOG_FILE_NAME = 'log.json';
+const i = (n) => ' '.repeat(n) ; // 任意の深さのインデント文字を返す
 
 // 前回のログ
-const prevLogs = await fetch(`${apiRoot}/pages/${logsProjName}/?limit=1`)
+const prevLogPages = await fetch(`${apiRoot}/pages/${logsProjName}/?limit=1`)
   .then(res => res.json())
   .then(data => data.pages);
 
@@ -18,35 +19,33 @@ const prevLogs = await fetch(`${apiRoot}/pages/${logsProjName}/?limit=1`)
 const pageList = await fetch(`${apiRoot}/pages/${linksProjName}/?limit=1`)
   .then(res => res.json());
 
-const body = ['code: log.txt'];
+const body = [`code: ${LOG_FILE_NAME}`];
+const log = [];
 const errors = [];
 
-if (prevLogs.length > 0) {
-  const found = prevLogs[0].descriptions.find(d => d.includes(TOTAL_CNT));
-  if (!found) {
-    errors.push('前回のログは見つかりましたが、ログの中にページ総数が見つかりませんでした。');
-  }
-
-  const prevTotalCnt = Boolean(found)
-    ? parseInt(found.split(`${TOTAL_CNT}: `)[1])
-    : 0;
-  const additionCnt = pageList.count - prevTotalCnt;
+// ログ用のjsonファイルを作成する
+if (prevLogPages.length > 0) {
+  const prevLog = await fetch(`${apiRoot}/code/${logsProjName}/${encodeURIComponent(prevLogPages[0].title)}/${LOG_FILE_NAME}`)
+    .then(res => res.json());
+  const additionCnt = pageList.count - prevLog[TOTAL_CNT];
   
-  body.push(
-    `${i}${`${TOTAL_CNT}: ${pageList.count}`}`,
-    `${i}${`${ADDITION_CNT}: ${additionCnt}`}`,
-    `${i}${`${APPROVAL_CNT}: 0`}`,
-    `${i}${`${UNAPPROVAL_CNT}: 0`}`,
+  log.push(
+    `${i(3)}${`"${TOTAL_CNT}": ${pageList.count}`}`,
+    `${i(3)}${`"${ADDITION_CNT}": ${additionCnt}`}`,
+    `${i(3)}${`"${APPROVAL_CNT}": 0`}`,
+    `${i(3)}${`"${UNAPPROVAL_CNT}": 0`}`,
   );
 
 } else {
-  body.push(
-    `${i}${`${TOTAL_CNT}: ${pageList.count}`}`,
-    `${i}${`${ADDITION_CNT}: ${pageList.count}`}`,
-    `${i}${`${APPROVAL_CNT}: 0`}`,
-    `${i}${`${UNAPPROVAL_CNT}: 0`}`,
+  log.push(
+    `${i(3)}${`"${TOTAL_CNT}": ${pageList.count}`}`,
+    `${i(3)}${`"${ADDITION_CNT}": ${pageList.count}`}`,
+    `${i(3)}${`"${APPROVAL_CNT}": 0`}`,
+    `${i(3)}${`"${UNAPPROVAL_CNT}": 0`}`,
   );
 }
+
+body.push(`${i(1)}{`, log.join(',\n'), `${i(1)}}`);
 
 const now = new Date()
 const [year, month, date, hour, min, sec] = [
@@ -59,7 +58,7 @@ const [year, month, date, hour, min, sec] = [
 ];
 
 const ymd = `${year}/${month}/${date}`;
-const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec} 時点でのログ`);
+const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec} 時点のログ`);
 
 // if (prevLogs[0]?.title.includes(ymd)) {
 //   errors.push('1日1つしかログを作ることはできません。今日は既にログを作成しています。');
