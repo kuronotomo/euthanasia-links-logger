@@ -112,7 +112,11 @@ class App {
     }
 
     this.log.push(`${App.i(3)}"${App.APPROVAL_CNT}": ${this.approvalCnt}`);
-    this.body.push(`${App.i(1)}{`, this.log.join(",\n"), `${App.i(1)}}`);
+    this.body.push(
+      `${App.i(1)}{`,
+      this.log.join(",\n"),
+      `${App.i(1)}}`,
+    );
   }
 
   createScrapboxPage() {
@@ -130,6 +134,11 @@ class App {
 
     const ymd = `${year}/${month}/${date}`;
     const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec} 時点のログ`);
+
+    this.body.push(
+      "",
+      `#${year}年 #${month}月`
+    );
 
     // if (this.prevLogs[0]?.title.includes(ymd)) {
     //   errors.push('1日1つしかログを作ることはできません。今日は既にログを作成しています。');
