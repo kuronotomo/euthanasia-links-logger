@@ -9,11 +9,17 @@ class App {
   static APPROVAL_CNT = "前回以降に承認されたページ数";
   static UNAPPROVAL_CNT = "未承認のページ数";
 
+  // static APPROVAL_CNT_SEARCH_QUERY = "#承認";
+  // static UNAPPROVAL_CNT_SEARCH_QUERY = "#未承認";
   static LOG_FILE_NAME = "log.json";
+
   static i = (n) => " ".repeat(n); // 任意の深さのインデント文字を返す
+
   static formatDate = (n) => n.toString().padStart(2, "0");
+
   static handleError = (res) => {
-    if (res.ok) return res;
+    const status = parseInt(res.status);
+    if (200 <= status && status < 400) return res;
     else throw new Error(res.status);
   };
 
@@ -21,6 +27,36 @@ class App {
     this.body = [`code: ${App.LOG_FILE_NAME}`];
     this.log = [];
     this.errors = [];
+    this.approvalCnt = 0;
+    this.unApprovalCnt = 0;
+  }
+
+  async getAllPagesAndCount() {
+    // 一度に100件までしか取得できないので、skipパラメータを更新しながら、件数が100を下回るまでfetchする
+    const pages = [];
+    const params = new URLSearchParams([["sort", "created"]]);
+    let skip = 0;
+
+    while (true) {
+      params.delete("skip");
+      params.append("skip", skip);
+      const res = await fetch(
+        `${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}?${params.toString()}`,
+      );
+      const data = await App.handleError(res).json();
+      pages.push(...data.pages);
+      skip += data.pages.length;
+
+      if (data.pages.length < 100) break;
+    }
+
+    for (const page of pages) {
+      if (page.title.includes("🚧")) { // 未承認
+        this.unApprovalCnt++;
+      } else if (!page.title.includes("🙈") && !page.pin) { // 承認済み
+        this.approvalCnt++;
+      }
+    }
   }
 
   async fetchData() {
@@ -29,23 +65,22 @@ class App {
 
       // 前回のログ
       responses.push(
-        await fetch(
-          `${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}/?limit=1`,
-        ),
+        await fetch(`${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}/?limit=1`),
       );
-      this.prevLogPages = await App.handleError(responses[0]).json().then((data) =>
-        data.pages
-      );
+      this.prevLogPages = await App.handleError(responses[0]).json().then((
+        data,
+      ) => data.pages);
 
       // リンク集のページ情報
       responses.push(
-        await fetch(
-          `${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}/?limit=1`,
-        ),
+        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}/?limit=1`),
       );
       this.pageList = await App.handleError(responses[1]).json();
+
+      // 承認済み・未承認ページの検索結果
+      await this.getAllPagesAndCount();
     } catch (error) {
-      this.errors.push(`通信エラーが発生しました。ステータス: ${error.message}`);
+      this.errors.push(`実行時エラーが発生しました。詳細: ${error.message}`);
     }
   }
 
@@ -65,15 +100,15 @@ class App {
       this.log.push(
         `${App.i(3)}${`"${App.TOTAL_CNT}": ${this.pageList.count}`}`,
         `${App.i(3)}${`"${App.ADDITION_CNT}": ${additionCnt}`}`,
-        `${App.i(3)}${`"${App.APPROVAL_CNT}": 0`}`,
-        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": 0`}`,
+        `${App.i(3)}${`"${App.APPROVAL_CNT}": ${this.approvalCnt}`}`,
+        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`}`,
       );
     } else {
       this.log.push(
         `${App.i(3)}${`"${App.TOTAL_CNT}": ${this.pageList.count}`}`,
         `${App.i(3)}${`"${App.ADDITION_CNT}": ${this.pageList.count}`}`,
-        `${App.i(3)}${`"${App.APPROVAL_CNT}": 0`}`,
-        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": 0`}`,
+        `${App.i(3)}${`"${App.APPROVAL_CNT}": ${this.approvalCnt}`}`,
+        `${App.i(3)}${`"${App.UNAPPROVAL_CNT}": ${this.unApprovalCnt}`}`,
       );
     }
 
