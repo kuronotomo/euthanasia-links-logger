@@ -133,7 +133,7 @@ class App {
     ];
 
     const ymd = `${year}/${month}/${date}`;
-    const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec} 時点のログ`);
+    const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec}`);
 
     this.body.push(
       "",
