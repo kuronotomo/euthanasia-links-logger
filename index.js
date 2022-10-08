@@ -92,6 +92,7 @@ class App {
               ),
             );
 
+            this.prevLogPageTitle = page.title;
             this.prevLog = await App.handleError(q.pop()).json();
             break;
           }
@@ -178,6 +179,14 @@ class App {
       "",
       `#${year}年 #${month}月`,
     );
+
+    if (this.prevLogPageTitle) {
+      this.body.push(
+        "",
+        "前回のログ",
+        `${App.i(1)}[${this.prevLogPageTitle}]`
+      )
+    }
 
     // if (this.prevLogs[0]?.title.includes(ymd)) {
     //   errors.push('1日1つしかログを作ることはできません。今日は既にログを作成しています。');
