@@ -211,7 +211,7 @@ class App {
         encodeURIComponent(this.body.join("\n"))
       }`;
 
-      if (window.open) {
+      if (window.open && confirm("新しいログを作成しますか？")) {
         window.open(url);
       } else {
         const p = Deno.run({
