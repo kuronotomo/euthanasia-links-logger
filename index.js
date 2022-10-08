@@ -225,6 +225,8 @@ class App {
   }
 
   async run() {
+    this.errors = [];
+
     await this.fetchData();
     this.createLog();
     await this.createScrapboxPage();
