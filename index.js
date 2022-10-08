@@ -64,10 +64,12 @@ class App {
     }
 
     for (const page of pages) {
-      if (page.title.includes("🚧")) { // 未承認
-        this.unapprovalCnt++;
-      } else if (!page.title.includes("🙈") && !page.pin) { // 承認済み
-        this.approvalCnt++;
+      if (!page.pin) {
+        if (page.title.includes("🚧")) { // 未承認
+          this.unapprovalCnt++;
+        } else { // 承認済み
+          this.approvalCnt++;
+        }
       }
     }
   }
