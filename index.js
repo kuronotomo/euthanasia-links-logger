@@ -1,8 +1,8 @@
 class App {
   static ROOT = "https://scrapbox.io";
   static API_ROOT = `${App.ROOT}/api`;
-  static LINKS_PROJ_NAME = "euthanasia-links";
-  static LOGS_PROJ_NAME = "euthanasia-links-logs";
+  static LINKS_PROJECT_NAME = "euthanasia-links";
+  static LOGS_PROJECT_NAME = "euthanasia-links-logs";
   static LOG_FILE_NAME = "log.json";
 
   static TOTAL_CNT = "ページ総数";
@@ -49,7 +49,7 @@ class App {
       params.delete("skip");
       params.append("skip", skip);
       const res = await fetch(
-        `${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}?${params.toString()}`,
+        `${App.API_ROOT}/pages/${App.LINKS_PROJECT_NAME}?${params.toString()}`,
       );
       const data = await App.handleError(res).json();
       pages.push(...data.pages);
@@ -75,25 +75,25 @@ class App {
       // ログファイル群のプロジェクトデータを取得する
       q.push(
         await fetch(
-          `${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}?${params}`,
+          `${App.API_ROOT}/pages/${App.LOGS_PROJECT_NAME}?${params}`,
         ),
       );
-      this.logProjectData = await App.handleError(q.pop()).json();
+      this.logsProjectData = await App.handleError(q.pop()).json();
 
       // 前回のログファイルを取得する
-      if (this.logProjectData.pages.length > 0) {
-        for (const page of this.logProjectData.pages) {
+      if (this.logsProjectData.pages.length > 0) {
+        for (const page of this.logsProjectData.pages) {
           if (!page.pin) {
             q.push(
               await fetch(
-                `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
+                `${App.API_ROOT}/code/${App.LOGS_PROJECT_NAME}/${
                   encodeURIComponent(page.title)
                 }/${App.LOG_FILE_NAME}`,
               ),
             );
 
-            this.prevLogPageTitle = page.title;
-            this.prevLog = await App.handleError(q.pop()).json();
+            this.prevLogPage = page;
+            this.prevLogFile = await App.handleError(q.pop()).json();
             break;
           }
         }
@@ -101,7 +101,7 @@ class App {
 
       // リンク集のプロジェクトデータを取得する
       q.push(
-        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJ_NAME}?${params}`),
+        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJECT_NAME}?${params}`),
       );
       this.linksProjectData = await App.handleError(q.pop()).json();
 
@@ -119,11 +119,11 @@ class App {
     this.log[App.TOTAL_CNT] = this.linksProjectData.count;
     this.log[App.UNAPPROVAL_CNT] = this.unapprovalCnt;
 
-    if (this.prevLog) {
+    if (this.prevLogFile) {
       const additionCnt = this.linksProjectData.count -
-        this.prevLog[App.TOTAL_CNT];
+        this.prevLogFile[App.TOTAL_CNT];
       const addtionCntDiff = additionCnt -
-        this.prevLog[App.ADDITION_CNT][App.CNT_VALUE];
+        this.prevLogFile[App.ADDITION_CNT][App.CNT_VALUE];
 
       this.log[App.ADDITION_CNT] = {
         [App.CNT_VALUE]: additionCnt,
@@ -131,7 +131,7 @@ class App {
       };
 
       const approvalCntDiff = this.approvalCnt -
-        this.prevLog[App.APPROVAL_CNT][App.CNT_VALUE];
+        this.prevLogFile[App.APPROVAL_CNT][App.CNT_VALUE];
 
       this.log[App.APPROVAL_CNT] = {
         [App.CNT_VALUE]: this.approvalCnt,
@@ -180,11 +180,11 @@ class App {
       `#${year}年 #${month}月`,
     );
 
-    if (this.prevLogPageTitle) {
+    if (this.prevLogPage) {
       this.body.push(
         "",
         "前回のログ",
-        `${App.i(1)}[${this.prevLogPageTitle}]`
+        `${App.i(1)}[${this.prevLogPage.title}]`
       )
     }
 
@@ -195,7 +195,7 @@ class App {
     if (this.errors.length > 0) {
       alert(this.errors.map((e) => `・${e}`).join("\n"));
     } else {
-      const url = `https://scrapbox.io/${App.LOGS_PROJ_NAME}/${title}?body=${
+      const url = `https://scrapbox.io/${App.LOGS_PROJECT_NAME}/${title}?body=${
         encodeURIComponent(this.body.join("\n"))
       }`;
 
