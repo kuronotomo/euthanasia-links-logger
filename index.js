@@ -11,6 +11,7 @@ class App {
   static APPROVAL_CNT = "前回以降に承認されたページ数";
   static CNT_VALUE = "値";
   static CNT_DIFF = "前回比";
+  static CREATED_AT = "作成時刻";
 
   static i = (n) => " ".repeat(n); // 任意の深さのインデント文字を返す
 
@@ -29,6 +30,10 @@ class App {
       : n === 0
       ? `±${0}`
       : `${n}`;
+  }
+
+  static within24Hours(prev, current) {
+    return prev + (60 * 60 * 24) * 1000 >= current;
   }
 
   constructor() {
@@ -101,7 +106,9 @@ class App {
 
       // リンク集のプロジェクトデータを取得する
       q.push(
-        await fetch(`${App.API_ROOT}/pages/${App.LINKS_PROJECT_NAME}?${params}`),
+        await fetch(
+          `${App.API_ROOT}/pages/${App.LINKS_PROJECT_NAME}?${params}`,
+        ),
       );
       this.linksProjectData = await App.handleError(q.pop()).json();
 
@@ -149,6 +156,8 @@ class App {
       };
     }
 
+    this.log[App.CREATED_AT] = new Date().getTime();
+
     // Scrapboxのコードブロック内に収まるように整形する
     this.body.push(
       JSON
@@ -184,16 +193,19 @@ class App {
       this.body.push(
         "",
         "前回のログ",
-        `${App.i(1)}[${this.prevLogPage.title}]`
-      )
+        `${App.i(1)}[${this.prevLogPage.title}]`,
+      );
     }
 
-    // if (this.prevLogs[0]?.title.includes(ymd)) {
-    //   errors.push('1日1つしかログを作ることはできません。今日は既にログを作成しています。');
-    // }
+    if (
+      this.prevLogFile &&
+      App.within24Hours(this.prevLogFile[App.CREATED_AT], now.getTime())
+    ) {
+      this.errors.push("前回から24時間以上経たないと、新しいログを作成することはできません。");
+    }
 
     if (this.errors.length > 0) {
-      alert(this.errors.map((e) => `・${e}`).join("\n"));
+      alert(this.errors.map((e) => "・" + e).join("\n"));
     } else {
       const url = `https://scrapbox.io/${App.LOGS_PROJECT_NAME}/${title}?body=${
         encodeURIComponent(this.body.join("\n"))
