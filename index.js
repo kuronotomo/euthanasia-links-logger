@@ -79,7 +79,7 @@ class App {
       const q = [];
       const params = new URLSearchParams([["sort", "created"]]).toString();
 
-      // ログファイル群のプロジェクトデータを取得する
+      // ログファイル保管庫のプロジェクトデータを取得する
       q.push(
         await fetch(
           `${App.API_ROOT}/pages/${App.LOGS_PROJECT_NAME}?${params}`,
@@ -182,9 +182,7 @@ class App {
         now.getSeconds(),
       ].map((date) => App.formatDate(date)),
     ];
-
-    const ymd = `${year}/${month}/${date}`;
-    const title = encodeURIComponent(`${ymd} ${hour}:${min}:${sec}`);
+    const title = encodeURIComponent(`${year}/${month}/${date} ${hour}:${min}:${sec}`);
 
     this.body.push(
       "",
