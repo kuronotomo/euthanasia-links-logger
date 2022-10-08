@@ -70,24 +70,32 @@ class App {
   async fetchData() {
     try {
       const q = [];
-      const params = new URLSearchParams([["limit", "1"], ["sort", "created"]])
-        .toString();
+      const params = new URLSearchParams([["sort", "created"]]).toString();
 
-      // ログファイル群のプロジェクトデータと前回のログファイルを取得する
+      // ログファイル群のプロジェクトデータを取得する
       q.push(
-        await fetch(`${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}?${params}`),
+        await fetch(
+          `${App.API_ROOT}/pages/${App.LOGS_PROJ_NAME}?${params}`,
+        ),
       );
       this.logProjectData = await App.handleError(q.pop()).json();
 
+      // 前回のログファイルを取得する
       if (this.logProjectData.pages.length > 0) {
-        q.push(
-          await fetch(
-            `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
-              encodeURIComponent(this.logProjectData.pages[0].title)
-            }/${App.LOG_FILE_NAME}`,
-          ),
-        );
-        this.prevLog = await App.handleError(q.pop()).json();
+        for (const page of this.logProjectData.pages) {
+          if (!page.pin) {
+            q.push(
+              await fetch(
+                `${App.API_ROOT}/code/${App.LOGS_PROJ_NAME}/${
+                  encodeURIComponent(page.title)
+                }/${App.LOG_FILE_NAME}`,
+              ),
+            );
+
+            this.prevLog = await App.handleError(q.pop()).json();
+            break;
+          }
+        }
       }
 
       // リンク集のプロジェクトデータを取得する
@@ -204,7 +212,7 @@ class App {
 
 const app = new App();
 
-if (scrapbox) {
+if (window?.scrapbox) {
   // deno-fmt-ignore
   scrapbox.PageMenu.addMenu({
     title: "create log",
