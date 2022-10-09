@@ -239,7 +239,7 @@ if (window?.scrapbox) {
   // deno-fmt-ignore
   scrapbox.PageMenu.addMenu({
     title: "create log",
-    image: "https://storage.googleapis.com/scrapbox-file-distribute/6336d0930be7d50021168ed2/cb2837aac49862b81746121f86211173?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=file-upload%40scrapbox-server.iam.gserviceaccount.com%2F20221007%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20221007T214835Z&X-Goog-Expires=301&X-Goog-SignedHeaders=host&X-Goog-Signature=7da3d995f612e2ad2e7132046e5d04daa1bb099dbdc520fee956203c508d8f9f132e7bda075ba02c432542a6081637bde6463d51b7329bff06794dfacf85db29f87bffae7b1d70a6bb9151eb38df04772586f48b3049f71cfd9bd692873f8535a8e98541a31e6c74fdda1a123c07050bfe7c4bc20a62993212167625ba7ff0bb2a5109425b02605185beb687848336d2b2ea95a35fc31c5e3b22b1751e30447361f9b7a4aed480ecad2eb5ac7e677dbdb6a924be1f394602900305e7784930f7dcb9a73473b2ec5eec6779d3f34778e9a576edeaee7278ab8f929890328a9605ce28fa3889570a957123f02fed41b6dcc760d0fa139d6092ff78e4127051acd1",
+    image: "https://scrapbox.io/files/63409ea9b31bcb00220f6979.png",
     onClick: async () => await app.run(),
   });
 } else {
