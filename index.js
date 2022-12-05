@@ -76,22 +76,22 @@ class App {
 
   async fetchData() {
     try {
-      const q = [];
+      const st = [];
       const params = new URLSearchParams([["sort", "created"]]).toString();
 
       // ログファイル保管庫のプロジェクトデータを取得する
-      q.push(
+      st.push(
         await fetch(
           `${App.API_ROOT}/pages/${App.LOGS_PROJECT_NAME}?${params}`,
         ),
       );
-      this.logsProjectData = await App.handleError(q.pop()).json();
+      this.logsProjectData = await App.handleError(st.pop()).json();
 
       // 前回のログファイルを取得する
       if (this.logsProjectData.pages.length > 0) {
         for (const page of this.logsProjectData.pages) {
           if (!page.pin) {
-            q.push(
+            st.push(
               await fetch(
                 `${App.API_ROOT}/code/${App.LOGS_PROJECT_NAME}/${
                   encodeURIComponent(page.title)
@@ -100,19 +100,19 @@ class App {
             );
 
             this.prevLogPage = page;
-            this.prevLogFile = await App.handleError(q.pop()).json();
+            this.prevLogFile = await App.handleError(st.pop()).json();
             break;
           }
         }
       }
 
       // リンク集のプロジェクトデータを取得する
-      q.push(
+      st.push(
         await fetch(
           `${App.API_ROOT}/pages/${App.LINKS_PROJECT_NAME}?${params}`,
         ),
       );
-      this.linksProjectData = await App.handleError(q.pop()).json();
+      this.linksProjectData = await App.handleError(st.pop()).json();
 
       // 承認済み・未承認ページ数を数える
       await this.getAllPagesAndCount();
